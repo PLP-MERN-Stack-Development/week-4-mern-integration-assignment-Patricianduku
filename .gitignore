@@ -1,19 +1,32 @@
- node_modules/
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
 
- # Environment variables
- .env
+# Environment variables
+.env
+server/.env
+client/.env
 
- # Build outputs
- client/dist/
- client/build/
+# Build outputs
+client/dist/
+client/build/
+server/dist/
+server/build/
 
- # Uploads folder
- server/uploads/
+# Uploads folder
+server/uploads/
 
- # Logs
- *.log
- logs/
+# Logs
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
 
- # IDE files
- .vscode/
- .idea/
+# IDE/editor folders
+.vscode/
+.idea/
+
+# OS system files
+.DS_Store
+Thumbs.db

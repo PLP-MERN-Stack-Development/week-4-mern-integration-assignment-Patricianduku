@@ -1,100 +1,100 @@
-// Post.js - Mongoose model for blog posts
+import mongoose from 'mongoose';
 
-const mongoose = require('mongoose');
-
-const PostSchema = new mongoose.Schema(
-  {
-    title: {
-      type: String,
-      required: [true, 'Please provide a title'],
-      trim: true,
-      maxlength: [100, 'Title cannot be more than 100 characters'],
-    },
-    content: {
-      type: String,
-      required: [true, 'Please provide content'],
-    },
-    featuredImage: {
-      type: String,
-      default: 'default-post.jpg',
-    },
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    excerpt: {
-      type: String,
-      maxlength: [200, 'Excerpt cannot be more than 200 characters'],
-    },
+const postSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 200
+  },
+  slug: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  excerpt: {
+    type: String,
+    maxlength: 300
+  },
+  featuredImage: {
+    type: String,
+    default: ''
+  },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true
+  },
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  status: {
+    type: String,
+    enum: ['draft', 'published', 'archived'],
+    default: 'draft'
+  },
+  views: {
+    type: Number,
+    default: 0
+  },
+  likes: {
+    type: Number,
+    default: 0
+  },
+  comments: [{
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      required: true
+    },
+    content: {
+      type: String,
       required: true,
+      maxlength: 1000
     },
-    category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category',
-      required: true,
-    },
-    tags: [String],
-    isPublished: {
-      type: Boolean,
-      default: false,
-    },
-    viewCount: {
-      type: Number,
-      default: 0,
-    },
-    comments: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-        },
-        content: {
-          type: String,
-          required: true,
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
-  },
-  { timestamps: true }
-);
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  publishedAt: {
+    type: Date
+  }
+}, {
+  timestamps: true
+});
 
-// Create slug from title before saving
-PostSchema.pre('save', function (next) {
-  if (!this.isModified('title')) {
-    return next();
+postSchema.pre('save', function(next) {
+  if (this.isModified('title')) {
+    this.slug = this.title.toLowerCase()
+      .replace(/[^\w ]+/g, '')
+      .replace(/ +/g, '-');
   }
   
-  this.slug = this.title
-    .toLowerCase()
-    .replace(/[^\w ]+/g, '')
-    .replace(/ +/g, '-');
-    
+  if (this.isModified('status') && this.status === 'published' && !this.publishedAt) {
+    this.publishedAt = new Date();
+  }
+  
+  if (this.isModified('content') && !this.excerpt) {
+    this.excerpt = this.content.substring(0, 200).replace(/<[^>]*>/g, '') + '...';
+  }
+  
   next();
 });
 
-// Virtual for post URL
-PostSchema.virtual('url').get(function () {
-  return `/posts/${this.slug}`;
-});
+postSchema.index({ title: 'text', content: 'text', excerpt: 'text' });
+postSchema.index({ status: 1, publishedAt: -1 });
+postSchema.index({ category: 1 });
+postSchema.index({ author: 1 });
 
-// Method to add a comment
-PostSchema.methods.addComment = function (userId, content) {
-  this.comments.push({ user: userId, content });
-  return this.save();
-};
-
-// Method to increment view count
-PostSchema.methods.incrementViewCount = function () {
-  this.viewCount += 1;
-  return this.save();
-};
-
-module.exports = mongoose.model('Post', PostSchema); 
+export default mongoose.model('Post', postSchema);
