@@ -1,0 +1,19 @@
+ node_modules/
+
+ # Environment variables
+ .env
+
+ # Build outputs
+ client/dist/
+ client/build/
+
+ # Uploads folder
+ server/uploads/
+
+ # Logs
+ *.log
+ logs/
+
+ # IDE files
+ .vscode/
+ .idea/
