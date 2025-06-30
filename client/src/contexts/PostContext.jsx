@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect } from "react";
+import React, { useReducer, useCallback } from "react";
 import toast from "react-hot-toast";
 import PostContext from "./postContextInstance";
 import { postService, categoryService } from "../services/api";
@@ -72,11 +72,8 @@ const initialState = {
 export const PostProvider = ({ children }) => {
   const [state, dispatch] = useReducer(postReducer, initialState);
 
-  useEffect(() => {
-    fetchPosts({ page: 1, limit: 9 });
-  }, []);
-
-  const fetchPosts = async (params = {}) => {
+  // ✅ Memoize fetchPosts to prevent infinite loop
+  const fetchPosts = useCallback(async (params = {}) => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
       const data = await postService.getAllPosts(params.page, params.limit);
@@ -91,7 +88,7 @@ export const PostProvider = ({ children }) => {
       dispatch({ type: "SET_LOADING", payload: false });
       toast.error("Failed to fetch posts");
     }
-  };
+  }, []);
 
   const fetchPost = async (slug) => {
     try {
